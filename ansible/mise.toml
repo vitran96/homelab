@@ -1,0 +1,2 @@
+[tools]
+"pipx:ansible" = "14.0.0"

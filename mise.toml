@@ -1,0 +1,3 @@
+[tools]
+"aqua:opentofu/opentofu" = "1.11.11"
+"pipx:ansible" = "14.0.0"

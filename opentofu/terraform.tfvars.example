@@ -1,0 +1,32 @@
+# Copy to terraform.tfvars — never commit to git
+
+# Proxmox API
+proxmox_endpoint  = "https://192.168.1.150:8006"
+proxmox_api_token = "opentofu@pam!opentofu=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+proxmox_insecure  = true
+proxmox_ssh_user  = "root"
+proxmox_node      = "pve"
+
+# Network
+network_bridge_wan = "vmbr0"
+network_bridge_lan = "vmbr1"
+network_gateway    = "192.168.1.1"
+dns_servers        = ["192.168.1.1", "1.1.1.1"]
+
+# Storage
+storage_pool         = "local-lvm"
+ubuntu_template_vmid = 9000
+
+# SSH public key
+ssh_public_key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAA... you@host"
+
+# VMIDs: pfsense=200, gitea=201, k3s=202, registry=203
+vmid_base = 200
+
+# IP map:
+#   pfsense   → 192.168.1.151  (manual)
+#   gitea     → 192.168.1.152  (UI:      http://192.168.1.152:3000)
+#   k3s       → 192.168.1.153  (Jenkins: http://192.168.1.153:32000)
+#                               (Headlamp:http://192.168.1.153:4466)
+#   registry  → 192.168.1.154  (API:     http://192.168.1.154:5000)
+#   workers   → external machines (use k3s_worker_join.sh)

@@ -1,0 +1,99 @@
+# ==========================================
+# Terraform / OpenTofu Core Ignored Files
+# ==========================================
+
+# Local micro-plugins, lock files, and cache
+.terraform/
+.opentofu/
+
+# Lockfile (.terraform.lock.hcl / .opentofu.lock.hcl)
+# NOTE: It is highly recommended to COMMIT the lockfile to source control
+# so your team uses identical provider versions. Un-comment the line below
+# ONLY if you have a specific reason to ignore it.
+# *.lock.hcl
+
+# Local state files
+# (DO NOT commit these; they contain secrets in plain text and environment data)
+*.tfstate
+*.tfstate.*
+
+# Crash logs
+crash.log
+crash.*.log
+
+# ==========================================
+# Variables and Secrets
+# ==========================================
+
+# Exclude all variable files that might contain secrets
+*.tfvars
+*.tfvars.json
+
+# Ignore override files (used for local tweaks)
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# ==========================================
+# CLI Configuration and Plan Outputs
+# ==========================================
+
+# Ignore CLI configuration files (.terraformrc or tofu.rc)
+.terraformrc
+tofu.rc
+terraform.rc
+
+# Ignore speculative plan files (can contain secrets)
+*.tfplan
+*.tfgraph
+
+# ==========================================
+# Ansible Core Ignored Files
+# ==========================================
+
+# Ansible retry files (generated when a playbook fails on specific hosts)
+*.retry
+
+# Ansible log files (if configured to log to the project directory)
+*.log
+
+# Local/Fact caching directories
+.ansible_cache/
+.ansible/
+fact_cache/
+
+# ==========================================
+# Ansible Galaxy / Dependency Management
+# ==========================================
+
+# If you download community roles/collections locally via requirements.yml,
+# it is usually best to ignore them and let your CI/CD or team download them fresh.
+roles/external/
+roles/contributed/
+collections/
+
+# ==========================================
+# Secrets and Security
+# ==========================================
+
+# Vault password files (NEVER commit the plaintext file used to decrypt variables)
+.ansible-vault-password
+*vault-pass*
+*.vault
+
+# ==========================================
+# Execution & Local Environments
+# ==========================================
+
+# Molecule testing framework artifacts
+.molecule/
+molecule/*/.pytest_cache/
+molecule/*/.tox/
+
+# Local python virtual environments (if managing dependencies locally)
+.venv/
+venv/
+ENV/
+
+.jj/
