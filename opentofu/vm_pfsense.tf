@@ -41,7 +41,7 @@ resource "proxmox_virtual_environment_vm" "pfsense" {
   }
 
   cdrom {
-    enabled   = true
+    # enabled   = true
     file_id   = "local:iso/pfSense-CE-2.7.2-RELEASE-amd64.iso"
     interface = "ide2"
   }

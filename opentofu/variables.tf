@@ -73,11 +73,6 @@ variable "ssh_public_key" {
   type        = string
 }
 
-#  type        = string
-#  sensitive   = true
-#  default     = "ChangeMe1234!"
-#}
-
 # ── VMID base ─────────────────────────────────────────────────────────────────
 variable "vmid_base" {
   description = "Starting VMID: pfsense=base, jenkins=+1, openclaw=+2, k3s=+3"
@@ -110,9 +105,9 @@ variable "k3s_worker_disk_gb" {
   default     = 60
 }
 
-# ── Rancher ───────────────────────────────────────────────────────────────────
-#   description = "Initial Rancher admin password — change on first login"
-#   type        = string
-#   sensitive   = true
-#   default     = "ChangeMe1234!"
-# }
+# ── ZeroTier ──────────────────────────────────────────────────────────────────
+
+variable "zerotier_network_id" {
+  description = "Your ZeroTier network ID"
+  type        = string
+}

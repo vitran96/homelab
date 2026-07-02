@@ -221,24 +221,24 @@ resource "proxmox_virtual_environment_file" "k3s_userdata" {
 }
 
 # ── Worker join script ────────────────────────────────────────────────────────
-# resource "local_file" "k3s_worker_join" {
-#   filename        = "${path.module}/k3s_worker_join.sh"
-#   file_permission = "0755"
-#   content         = <<-EOT
-#     #!/usr/bin/env bash
-#     # Usage: bash k3s_worker_join.sh <worker-hostname>
-#     set -euo pipefail
-#     MASTER_IP="192.168.1.153"
-#     WORKER_NAME="${1:-$(hostname)}"
-#     echo "==> Fetching node token from master..."
-#     TOKEN=$(ssh -o StrictHostKeyChecking=no ubuntu@$MASTER_IP \
-#       "cat /var/lib/rancher/k3s/server/node-token")
-#     echo "==> Joining as $WORKER_NAME..."
-#     curl -sfL https://get.k3s.io | \
-#       K3S_TOKEN="$TOKEN" \
-#       K3S_URL="https://$MASTER_IP:6443" \
-#       INSTALL_K3S_EXEC="agent --node-name $WORKER_NAME --node-label role=worker" \
-#       sh -
-#     echo "==> Done. Verify: kubectl get nodes -o wide"
-#   EOT
-# }
+resource "local_file" "k3s_worker_join" {
+  filename        = "${path.module}/k3s_worker_join.sh"
+  file_permission = "0755"
+  content         = <<-EOT
+    #!/usr/bin/env bash
+    # Usage: bash k3s_worker_join.sh <worker-hostname>
+    set -euo pipefail
+    MASTER_IP="192.168.1.153"
+    WORKER_NAME="$${1:-$(hostname)}"
+    echo "==> Fetching node token from master..."
+    TOKEN=$(ssh -o StrictHostKeyChecking=no ubuntu@$MASTER_IP \
+      "cat /var/lib/rancher/k3s/server/node-token")
+    echo "==> Joining as $WORKER_NAME..."
+    curl -sfL https://get.k3s.io | \
+      K3S_TOKEN="$TOKEN" \
+      K3S_URL="https://$MASTER_IP:6443" \
+      INSTALL_K3S_EXEC="agent --node-name $WORKER_NAME --node-label role=worker" \
+      sh -
+    echo "==> Done. Verify: kubectl get nodes -o wide"
+  EOT
+}
