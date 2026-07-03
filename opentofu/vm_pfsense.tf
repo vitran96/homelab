@@ -34,12 +34,12 @@ resource "proxmox_virtual_environment_vm" "pfsense" {
   started     = true
 
   cpu {
-    cores = 1
+    cores = 2
     type  = "host"
   }
 
   memory {
-    dedicated = 1024
+    dedicated = 1536
   }
 
   # WAN NIC
