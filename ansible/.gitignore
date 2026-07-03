@@ -1,0 +1,41 @@
+# ==========================================
+# Ansible & Python Virtual Environments
+# ==========================================
+
+# Ignore local Python virtual environments
+.venv/
+venv/
+ENV/
+
+# ==========================================
+# Ansible Core Ignored Files
+# ==========================================
+
+# Ansible retry files (generated when a playbook fails on specific hosts)
+*.retry
+
+# Ansible log files (if configured to log to the project directory)
+*.log
+
+# Local/Fact caching directories
+.ansible_cache/
+.ansible/
+fact_cache/
+
+# ==========================================
+# Ansible Galaxy / Dependency Management
+# ==========================================
+
+# If you download community roles/collections locally via requirements.yml,
+# it is best to ignore them and let your CI/CD or team download them fresh.
+roles/
+collections/
+
+# ==========================================
+# Secrets and Security
+# ==========================================
+
+# Vault password files (NEVER commit the plaintext file used to decrypt variables)
+.ansible-vault-password
+*vault-pass*
+*.vault

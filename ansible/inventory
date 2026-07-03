@@ -1,0 +1,9 @@
+[firewalls]
+pfsense ansible_host=192.168.1.151
+
+[firewalls:vars]
+ansible_user=admin
+ansible_password=YOUR_PFSENSE_ADMIN_PASSWORD_HERE # Use Ansible Vault for this in production!
+ansible_connection=httpapi
+ansible_httpapi_use_ssl=true
+ansible_httpapi_validate_certs=false # pfSense uses a self-signed cert by default
