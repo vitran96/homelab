@@ -39,7 +39,7 @@ resource "proxmox_virtual_environment_vm" "pfsense" {
   }
 
   memory {
-    dedicated = 512
+    dedicated = 1024
   }
 
   # WAN NIC
