@@ -76,7 +76,8 @@ resource "proxmox_virtual_environment_vm" "pfsense" {
     interface = "ide2"
   }
 
-  boot_order = ["ide2", "virtio0"]
+  # boot_order = ["ide2", "virtio0"]
+  boot_order = ["virtio0"]
 
   operating_system {
     type = "other"
