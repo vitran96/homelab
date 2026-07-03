@@ -1,16 +1,28 @@
 # ── pfSense ───────────────────────────────────────────────────────────────────
 # IP: 192.168.1.151 (LAN — set manually during install)
 # No cloud-init: install interactively via Proxmox console, then set started=true
-# Pre-req: upload pfSense ISO → Proxmox UI → local → ISO Images
+# The ISO is uploaded automatically by Terraform from your local machine.
 # ─────────────────────────────────────────────────────────────────────────────
+
+# This resource uploads the pfSense ISO from your local machine to the
+# 'local' storage pool on Proxmox. This avoids manual uploads.
+resource "proxmox_virtual_environment_file" "pfsense_iso" {
+  content_type = "iso"
+  datastore_id = "local"
+  node_name    = var.proxmox_node
+  source_file {
+    path = var.pfsense_iso_path
+  }
+}
+
 
 resource "proxmox_virtual_environment_vm" "pfsense" {
   name        = "pfsense"
-  description = "pfSense firewall/router — 192.168.1.151"
+  description = "pfSense firewall/router"
   node_name   = var.proxmox_node
   vm_id       = var.vmid_base        # 200
   on_boot     = true
-  started     = false                # flip to true after ISO install
+  started     = true
 
   cpu {
     cores = 1
@@ -22,15 +34,33 @@ resource "proxmox_virtual_environment_vm" "pfsense" {
   }
 
   # WAN NIC
-  network_device {
-    bridge = var.network_bridge_wan
-    model  = "virtio"
-  }
+  # network_device {
+  #   bridge = var.network_bridge_wan
+  #   model  = "virtio"
+  # }
 
   # LAN NIC
   network_device {
     bridge = var.network_bridge_lan
     model  = "virtio"
+  }
+
+  # NOTE: pfSense does not support cloud-init. This block is for consistency
+  # in Terraform code but will NOT automatically configure the guest OS.
+  # IP configuration must be done manually via the console during install.
+  initialization {
+    # The LAN IP you will set manually during pfSense setup.
+    ip_config {
+      ipv4 {
+        address = var.pfsense_ip
+        gateway = var.network_gateway
+      }
+    }
+    dns {
+      servers = var.pfsense_dns_servers
+    }
+    # SSH key is not used by pfSense by default.
+    user_account { keys = [var.ssh_public_key] }
   }
 
   disk {
@@ -42,15 +72,17 @@ resource "proxmox_virtual_environment_vm" "pfsense" {
 
   cdrom {
     # enabled   = true
-    file_id   = "local:iso/pfSense-CE-2.7.2-RELEASE-amd64.iso"
+    file_id   = proxmox_virtual_environment_file.pfsense_iso.id
     interface = "ide2"
   }
 
-  boot_order = ["virtio0", "ide2"]
+  boot_order = ["ide2", "virtio0"]
 
   operating_system {
     type = "other"
   }
+
+  agent { enabled = false } # QEMU Guest Agent is not installed by default
 
   lifecycle {
     ignore_changes = [cdrom]

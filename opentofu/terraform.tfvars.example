@@ -11,7 +11,10 @@ proxmox_node      = "pve"
 network_bridge_wan = "vmbr0"
 network_bridge_lan = "vmbr1"
 network_gateway    = "192.168.1.1"
-dns_servers        = ["192.168.1.1", "1.1.1.1"]
+dns_servers        = ["192.168.1.151", "192.168.1.1"]
+
+#pfsense_ip = "192.168.1.151/24"
+#pfsense_iso_path = ""
 
 # Storage
 storage_pool         = "local-lvm"

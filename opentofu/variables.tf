@@ -47,10 +47,30 @@ variable "network_gateway" {
   default     = "192.168.1.1"
 }
 
+variable "pfsense_dns_servers" {
+  description = "DNS servers for pfSense firewall/router"
+  type        = list(string)
+  default     = ["1.1.1.1", "1.0.0.1", "192.168.1.1"]
+}
+
+
 variable "dns_servers" {
   description = "DNS servers injected via cloud-init"
   type        = list(string)
-  default     = ["192.168.1.1", "1.1.1.1"]
+  default     = ["192.168.1.151", "192.168.1.1"]
+}
+
+variable "pfsense_ip" {
+  description = "LAN IP for pfSense firewall/router"
+  type        = string
+  default     = "192.168.1.151/24"
+}
+
+# ── ISOs ──────────────────────────────────────────────────────────────────────
+variable "pfsense_iso_path" {
+  description = "Local path to the pfSense installer ISO file"
+  type        = string
+  default     = "./iso/pfsense.iso"
 }
 
 # ── Storage ───────────────────────────────────────────────────────────────────

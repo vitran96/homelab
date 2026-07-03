@@ -20,7 +20,7 @@
 
 resource "proxmox_virtual_environment_vm" "vpn" {
   name        = "vpn"
-  description = "OpenVPN server + ZeroTier client — 192.168.1.155"
+  description = "OpenVPN server + ZeroTier client"
   node_name   = var.proxmox_node
   vm_id       = var.vmid_base + 4   # 204
   on_boot     = true
