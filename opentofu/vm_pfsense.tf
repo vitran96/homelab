@@ -15,6 +15,15 @@ resource "proxmox_virtual_environment_file" "pfsense_iso" {
   }
 }
 
+# resource "proxmox_virtual_environment_file" "pfsense_config" {
+#   content_type = "snippets"
+#   datastore_id = "local"
+#   node_name    = var.proxmox_node
+
+#   source_file {
+#     path = "./config.xml" # or var.pfsense_config_path
+#   }
+# }
 
 resource "proxmox_virtual_environment_vm" "pfsense" {
   name        = "pfsense"
@@ -45,23 +54,22 @@ resource "proxmox_virtual_environment_vm" "pfsense" {
     model  = "virtio"
   }
 
-  # NOTE: pfSense does not support cloud-init. This block is for consistency
-  # in Terraform code but will NOT automatically configure the guest OS.
-  # IP configuration must be done manually via the console during install.
-  initialization {
-    # The LAN IP you will set manually during pfSense setup.
-    ip_config {
-      ipv4 {
-        address = var.pfsense_ip
-        gateway = var.network_gateway
-      }
-    }
-    dns {
-      servers = var.pfsense_dns_servers
-    }
-    # SSH key is not used by pfSense by default.
-    user_account { keys = [var.ssh_public_key] }
-  }
+  # NOTE: pfSense does not support cloud-init.
+  # Must config manually or via config.xml
+  # initialization {
+  #   # ip_config ignored for proxmox
+  #   ip_config {
+  #     ipv4 {
+  #       address = var.pfsense_ip
+  #       gateway = var.network_gateway
+  #     }
+  #   }
+  #   dns {
+  #     servers = var.pfsense_dns_servers
+  #   }
+  #   # SSH key is not used by pfSense by default.
+  #   user_account { keys = [var.ssh_public_key] }
+  # }
 
   disk {
     datastore_id = var.storage_pool
