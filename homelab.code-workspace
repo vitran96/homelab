@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "ansible"
+		},
+		{
+			"path": "opentofu"
+		}
+	],
+	"settings": {}
+}

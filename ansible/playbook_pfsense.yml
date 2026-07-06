@@ -1,24 +1,24 @@
-- name: Configure pfSense Firewall
-  hosts: firewalls
-  gather_facts: false
-  collections:
-    - pfsensible.core
-    - pfsensible.pfblockerng       # Community collection for pfBlockerNG
-  tasks:
+# - name: Configure pfSense Firewall
+#   hosts: firewalls
+#   gather_facts: false
+#   collections:
+#     - pfsensible.core
+#     - pfsensible.pfblockerng       # Community collection for pfBlockerNG
+#   tasks:
 
-    - name: Install the pfBlockerNG package
-      pfsense_package:
-        name: "pfBlockerNG-devel"   # Always use the actively maintained -devel package
-        state: present
+#     - name: Install the pfBlockerNG package
+#       pfsense_package:
+#         name: "pfBlockerNG-devel"   # Always use the actively maintained -devel package
+#         state: present
 
-    - name: Enable DNSBL (DNS Blacklist)
-      pfsense_pfblockerng_dnsbl:
-        enable: true
-        python_mode: true           # Recommended for better performance
+#     - name: Enable DNSBL (DNS Blacklist)
+#       pfsense_pfblockerng_dnsbl:
+#         enable: true
+#         python_mode: true           # Recommended for better performance
 
-    - name: Add a lightweight adblock feed
-      pfsense_pfblockerng_feed:
-        name: "StevenBlack_Ads"
-        url: "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts"
-        action: "Unbound"
-        cron: "0 0 * * *"            # Update daily at midnight
+#     - name: Add a lightweight adblock feed
+#       pfsense_pfblockerng_feed:
+#         name: "StevenBlack_Ads"
+#         url: "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts"
+#         action: "Unbound"
+#         cron: "0 0 * * *"            # Update daily at midnight
