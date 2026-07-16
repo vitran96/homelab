@@ -104,8 +104,10 @@ resource "proxmox_virtual_environment_file" "registry_userdata" {
       runcmd:
         - systemctl enable qemu-guest-agent
         - systemctl start qemu-guest-agent
-        - curl -fsSL https://github.com/distribution/distribution/releases/latest/download/registry_linux_amd64 -o /usr/local/bin/registry
+        - curl -fsSL https://github.com/distribution/distribution/releases/download/v3.1.1/registry_3.1.1_linux_amd64.tar.gz -o /tmp
+        - tar -xzf "/tmp/registry_3.1.1_linux_amd64.tar.gz" /usr/local/bin/registry
         - chmod +x /usr/local/bin/registry
+        - rm /tmp/registry_3.1.1_linux_amd64.tar.gz
         - adduser ${var.registry_username} --gecos "" --disabled-password --home /home/${var.registry_username}
         - mkdir -p /home/${var.registry_username}/data
         - |
