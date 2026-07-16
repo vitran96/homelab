@@ -8,8 +8,8 @@ proxmox_ssh_user  = "root"
 proxmox_node      = "pve"
 
 # Network
-network_bridge_wan = "vmbr0"
-network_bridge_lan = "vmbr1"
+#network_bridge_wan = "vmbr0"
+network_bridge_lan = "vmbr0"
 network_gateway    = "192.168.1.1"
 dns_servers        = ["192.168.1.151", "192.168.1.1"]
 
@@ -18,7 +18,7 @@ dns_servers        = ["192.168.1.151", "192.168.1.1"]
 
 # Storage
 storage_pool         = "local-lvm"
-ubuntu_template_vmid = 9000
+rocky_template_vmid  = 9000
 
 # SSH public key
 ssh_public_key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAA... you@host"

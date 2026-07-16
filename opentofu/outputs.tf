@@ -24,33 +24,33 @@ output "vm_summary" {
       ip   = "192.168.1.154"
       url  = "http://192.168.1.154:5000"
     }
-    vpn = {
-      vmid = proxmox_virtual_environment_vm.vpn.vm_id
-      ip   = "192.168.1.155"
-      note = <<-EON
-        Post-deploy steps:
-          1. sudo zerotier-cli join <network-id>
-          2. Approve VM at https://my.zerotier.com
-          3. sudo zerotier-cli listnetworks  (note ZeroTier IP)
-          4. Edit /etc/openvpn/server.conf — uncomment 'local', set ZeroTier IP
-          5. sudo systemctl restart openvpn@server
-          6. sudo bash /opt/openvpn-client-gen.sh <device-name>
-      EON
-    }
+    # vpn = {
+    #   vmid = proxmox_virtual_environment_vm.vpn.vm_id
+    #   ip   = "192.168.1.155"
+    #   note = <<-EON
+    #     Post-deploy steps:
+    #       1. sudo zerotier-cli join <network-id>
+    #       2. Approve VM at https://my.zerotier.com
+    #       3. sudo zerotier-cli listnetworks  (note ZeroTier IP)
+    #       4. Edit /etc/openvpn/server.conf — uncomment 'local', set ZeroTier IP
+    #       5. sudo systemctl restart openvpn@server
+    #       6. sudo bash /opt/openvpn-client-gen.sh <device-name>
+    #   EON
+    # }
   }
 }
 
-output "k3s_worker_join_command" {
-  value = <<-EOC
-    # 1. Get node token:
-    ssh ubuntu@192.168.1.153 "cat /var/lib/rancher/k3s/server/node-token"
+# output "k3s_worker_join_command" {
+#   value = <<-EOC
+#     # 1. Get node token:
+#     ssh ubuntu@192.168.1.153 "cat /var/lib/rancher/k3s/server/node-token"
 
-    # 2. On worker machine:
-    curl -sfL https://get.k3s.io | \
-      K3S_TOKEN=<paste_token> \
-      K3S_URL=https://192.168.1.153:6443 \
-      INSTALL_K3S_EXEC="agent --node-label role=worker" sh -
+#     # 2. On worker machine:
+#     curl -sfL https://get.k3s.io | \
+#       K3S_TOKEN=<paste_token> \
+#       K3S_URL=https://192.168.1.153:6443 \
+#       INSTALL_K3S_EXEC="agent --node-label role=worker" sh -
 
-    # Or use: bash k3s_worker_join.sh <worker-hostname>
-  EOC
-}
+#     # Or use: bash k3s_worker_join.sh <worker-hostname>
+#   EOC
+# }

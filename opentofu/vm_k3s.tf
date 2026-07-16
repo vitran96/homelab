@@ -19,7 +19,7 @@ resource "proxmox_virtual_environment_vm" "k3s" {
   started     = true
 
   clone {
-    vm_id = var.ubuntu_template_vmid
+    vm_id = var.rocky_template_vmid
     full  = true
   }
 

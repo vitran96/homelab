@@ -1,0 +1,49 @@
+#cloud-config
+package_update: true
+package_upgrade: true
+packages:
+  - curl
+
+runcmd:
+  - curl -fsSL https://github.com/distribution/distribution/releases/latest/download/registry_linux_amd64 -o /usr/local/bin/registry
+  - chmod +x /usr/local/bin/registry
+  - adduser registry --gecos "" --disabled-password --home /opt/registry
+  - mkdir -p /opt/registry/data
+  - |
+    cat > /opt/registry/config.yml <<CFG
+    version: 0.1
+    log:
+      level: info
+    storage:
+      filesystem:
+        rootdirectory: /opt/registry/data
+      delete:
+        enabled: true
+    http:
+      addr: :5000
+      headers:
+        X-Content-Type-Options: [nosniff]
+    health:
+      storagedriver:
+        enabled: true
+        interval: 10s
+        threshold: 3
+    CFG
+  - chown -R registry:registry /opt/registry
+  - |
+    cat > /etc/systemd/system/registry.service <<SERVICE
+    [Unit]
+    Description=Distribution Container Registry
+    After=network.target
+    [Service]
+    Type=simple
+    User=registry
+    ExecStart=/usr/local/bin/registry serve /opt/registry/config.yml
+    Restart=on-failure
+    RestartSec=5
+    [Install]
+    WantedBy=multi-user.target
+    SERVICE
+  - systemctl daemon-reload
+  - systemctl enable --now registry
+  - echo "==> Registry ready at http://${registry_ip}:5000"

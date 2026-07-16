@@ -28,17 +28,23 @@ variable "proxmox_node" {
   default     = "pve"
 }
 
-# ── Network ───────────────────────────────────────────────────────────────────
-variable "network_bridge_wan" {
-  description = "Bridge facing WAN/internet (pfSense WAN NIC)"
+variable "host_private_key" {
+  description = "Host private key for Proxmox"
   type        = string
-  default     = "vmbr0"
+  default     = "~/.ssh/id_ed25519"
 }
+
+# ── Network ───────────────────────────────────────────────────────────────────
+# variable "network_bridge_wan" {
+#   description = "Bridge facing WAN/internet (pfSense WAN NIC)"
+#   type        = string
+#   default     = "vmbr0"
+# }
 
 variable "network_bridge_lan" {
   description = "Bridge for internal/LAN traffic (all other VMs)"
   type        = string
-  default     = "vmbr1"
+  default     = "vmbr0"
 }
 
 variable "network_gateway" {
@@ -63,7 +69,7 @@ variable "dns_servers" {
 variable "pfsense_ip" {
   description = "LAN IP for pfSense firewall/router"
   type        = string
-  default     = "192.168.1.151/24"
+  default     = "192.168.1.151"
 }
 
 # ── ISOs ──────────────────────────────────────────────────────────────────────
@@ -81,7 +87,7 @@ variable "storage_pool" {
 }
 
 # ── Templates ─────────────────────────────────────────────────────────────────
-variable "ubuntu_template_vmid" {
+variable "rocky_template_vmid" {
   description = "VMID of your Ubuntu 22.04 cloud-init template (see README)"
   type        = number
   default     = 9000
@@ -125,9 +131,39 @@ variable "k3s_worker_disk_gb" {
   default     = 60
 }
 
+variable "k3s_ip" {
+  description = "LAN IP for K3S firewall/router"
+  type        = string
+  default     = "192.168.1.153"
+}
+
 # ── ZeroTier ──────────────────────────────────────────────────────────────────
 
-variable "zerotier_network_id" {
-  description = "Your ZeroTier network ID"
+# variable "zerotier_network_id" {
+#   description = "Your ZeroTier network ID"
+#   type        = string
+# }
+
+variable "gitea_ip" {
+  description = "LAN IP for Gitea firewall/router"
   type        = string
+  default     = "192.168.1.152"
+}
+
+variable "registry_ip" {
+  description = "LAN IP for Gitea firewall/router"
+  type        = string
+  default     = "192.168.1.154"
+}
+
+variable "registry_username" {
+  description = "Registry VM username"
+  type        = string
+  default     = "rocky"
+}
+
+variable "registry_password" {
+  description = "Registry VM password"
+  type        = string
+  default     = "password123"
 }

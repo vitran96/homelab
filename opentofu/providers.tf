@@ -18,7 +18,8 @@ provider "proxmox" {
   insecure  = var.proxmox_insecure  # set true if using self-signed cert
 
   ssh {
-    agent    = true
+    agent    = false
     username = var.proxmox_ssh_user
+    private_key = file(pathexpand(var.host_private_key))
   }
 }

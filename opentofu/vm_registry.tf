@@ -22,19 +22,19 @@ resource "proxmox_virtual_environment_vm" "registry" {
   started     = true
 
   clone {
-    vm_id = var.ubuntu_template_vmid
+    vm_id = proxmox_virtual_environment_vm.rocky_template.vm_id
     full  = true
   }
 
   cpu {
-    cores = 1
+    cores = 2
     limit = 50
     units = 50
     type  = "host"
   }
 
   memory {
-    dedicated = 512
+    dedicated = 1024
   }
 
   network_device {
@@ -53,16 +53,12 @@ resource "proxmox_virtual_environment_vm" "registry" {
   initialization {
     ip_config {
       ipv4 {
-        address = "192.168.1.154/24"
+        address = "${var.registry_ip}/24"
         gateway = var.network_gateway
       }
     }
     dns {
       servers = var.dns_servers
-    }
-    user_account {
-      username = "ubuntu"
-      keys     = [var.ssh_public_key]
     }
     user_data_file_id = proxmox_virtual_environment_file.registry_userdata.id
   }
@@ -76,28 +72,50 @@ resource "proxmox_virtual_environment_file" "registry_userdata" {
   datastore_id = "local"
   node_name    = var.proxmox_node
 
+  # add below to config for fallover
+  # ssh_pwauth: True
+  # chpasswd:
+  #   list: |
+  #     rocky:password123
+  #   expire: False
   source_raw {
     file_name = "registry-userdata.yaml"
     data      = <<-EOT
       #cloud-config
+      hostname: docker-registry
+      chpasswd:
+        list: |
+          ${var.registry_username}:${var.registry_password}
+        expire: False
+      users:
+        - default
+        - name: ${var.registry_username}
+          groups:
+            - sudo
+          ssh_authorized_keys:
+            - ${var.ssh_public_key}
+          sudo: ['ALL=(ALL) NOPASSWD:ALL']
+          shell: /bin/bash
       package_update: true
       package_upgrade: true
       packages:
         - curl
-
+        - qemu-guest-agent
       runcmd:
+        - systemctl enable qemu-guest-agent
+        - systemctl start qemu-guest-agent
         - curl -fsSL https://github.com/distribution/distribution/releases/latest/download/registry_linux_amd64 -o /usr/local/bin/registry
         - chmod +x /usr/local/bin/registry
-        - adduser registry --gecos "" --disabled-password --home /opt/registry
-        - mkdir -p /opt/registry/data
+        - adduser ${var.registry_username} --gecos "" --disabled-password --home /home/${var.registry_username}
+        - mkdir -p /home/${var.registry_username}/data
         - |
-          cat > /opt/registry/config.yml <<CFG
+          cat > /home/${var.registry_username}/config.yml <<CFG
           version: 0.1
           log:
             level: info
           storage:
             filesystem:
-              rootdirectory: /opt/registry/data
+              rootdirectory: /home/${var.registry_username}/data
             delete:
               enabled: true
           http:
@@ -110,7 +128,7 @@ resource "proxmox_virtual_environment_file" "registry_userdata" {
               interval: 10s
               threshold: 3
           CFG
-        - chown -R registry:registry /opt/registry
+        - chown -R ${var.registry_username}:${var.registry_username} /home/${var.registry_username}
         - |
           cat > /etc/systemd/system/registry.service <<SERVICE
           [Unit]
@@ -118,8 +136,8 @@ resource "proxmox_virtual_environment_file" "registry_userdata" {
           After=network.target
           [Service]
           Type=simple
-          User=registry
-          ExecStart=/usr/local/bin/registry serve /opt/registry/config.yml
+          User=${var.registry_username}
+          ExecStart=/usr/local/bin/registry serve /home/${var.registry_username}/config.yml
           Restart=on-failure
           RestartSec=5
           [Install]
@@ -127,7 +145,8 @@ resource "proxmox_virtual_environment_file" "registry_userdata" {
           SERVICE
         - systemctl daemon-reload
         - systemctl enable --now registry
-        - echo "==> Registry ready at http://192.168.1.154:5000"
+        - echo "==> Registry ready at http://${var.registry_ip}:5000"
+        - echo "done" > /tmp/cloud-config.done
     EOT
   }
 }
