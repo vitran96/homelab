@@ -15,7 +15,7 @@
 
 resource "proxmox_virtual_environment_vm" "registry" {
   name        = "registry"
-  description = "Distribution container registry — 192.168.1.154"
+  description = "Distribution container registry — ${var.registry_ip}"
   node_name   = var.proxmox_node
   vm_id       = var.vmid_base + 3   # 203
   on_boot     = true
@@ -72,12 +72,6 @@ resource "proxmox_virtual_environment_file" "registry_userdata" {
   datastore_id = "local"
   node_name    = var.proxmox_node
 
-  # add below to config for fallover
-  # ssh_pwauth: True
-  # chpasswd:
-  #   list: |
-  #     rocky:password123
-  #   expire: False
   source_raw {
     file_name = "registry-userdata.yaml"
     data      = <<-EOT
