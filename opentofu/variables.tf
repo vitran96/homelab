@@ -107,31 +107,43 @@ variable "vmid_base" {
 }
 
 # ── k3s cluster sizing ────────────────────────────────────────────────────────
-variable "k3s_worker_count" {
-  description = "Number of k3s worker nodes to create (IPs start at 192.168.1.157)"
-  type        = number
-  default     = 3
+# variable "k3s_worker_count" {
+#   description = "Number of k3s worker nodes to create (IPs start at 192.168.1.157)"
+#   type        = number
+#   default     = 3
+# }
+
+# variable "k3s_worker_cores" {
+#   description = "vCPU count per worker node"
+#   type        = number
+#   default     = 4
+# }
+
+# variable "k3s_worker_memory_mb" {
+#   description = "RAM in MB per worker node"
+#   type        = number
+#   default     = 8192
+# }
+
+# variable "k3s_worker_disk_gb" {
+#   description = "Disk size in GB per worker node"
+#   type        = number
+#   default     = 60
+# }
+
+variable "k3s_master_username" {
+  description = "K3s master node username"
+  type        = string
+  default     = "k3s-master"
 }
 
-variable "k3s_worker_cores" {
-  description = "vCPU count per worker node"
-  type        = number
-  default     = 4
+variable "k3s_master_password" {
+  description = "K3s master node password"
+  type        = string
+  default     = "password123"
 }
 
-variable "k3s_worker_memory_mb" {
-  description = "RAM in MB per worker node"
-  type        = number
-  default     = 8192
-}
-
-variable "k3s_worker_disk_gb" {
-  description = "Disk size in GB per worker node"
-  type        = number
-  default     = 60
-}
-
-variable "k3s_ip" {
+variable "k3s_master_ip" {
   description = "LAN IP for K3S firewall/router"
   type        = string
   default     = "192.168.1.153"
