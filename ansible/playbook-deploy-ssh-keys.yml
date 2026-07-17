@@ -1,0 +1,49 @@
+# deploy-ssh-keys.yml
+---
+- name: Deploy Public Key to SSH Server
+  hosts: ssh_servers
+  vars:
+    # Path on your LOCAL machine
+    local_public_key_path: "~/.ssh/id_ed25519.pub"
+    ssh_server_user: "k3s-master"
+  tasks:
+    - name: "Read local public key"
+      ansible.builtin.slurp:
+        src: "{{ local_public_key_path }}"
+      delegate_to: localhost
+      register: slurped_pubkey
+
+    - name: Authorize public key on SSH server
+      ansible.posix.authorized_key:
+        user: "{{ ssh_server_user }}"
+        state: present
+        key: "{{ slurped_pubkey['content'] | b64decode }}"
+
+- name: Deploy Private Key to SSH Client
+  hosts: ssh_clients
+  vars:
+    # Path on your LOCAL machine
+    local_private_key_path: "~/.ssh/id_ed25519"
+    ssh_client_user: "jenkins"
+  tasks:
+    - name: Read local private key
+      ansible.builtin.slurp:
+        src: "{{ local_private_key_path }}"
+      delegate_to: localhost
+      register: slurped_privkey
+
+    - name: Ensure .ssh directory exists on client
+      ansible.builtin.file:
+        path: "/home/{{ ssh_client_user }}/.ssh"
+        state: directory
+        owner: "{{ ssh_client_user }}"
+        group: "{{ ssh_client_user }}"
+        mode: '0700'
+
+    - name: Write private key to client
+      ansible.builtin.copy:
+        content: "{{ slurped_privkey['content'] | b64decode }}"
+        dest: "/home/{{ ssh_client_user }}/.ssh/id_ed25519"
+        owner: "{{ ssh_client_user }}"
+        group: "{{ ssh_client_user }}"
+        mode: '0600'
