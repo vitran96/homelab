@@ -1,14 +1,14 @@
-# ── Gitea ─────────────────────────────────────────────────────────────────────
-# IP: 192.168.1.152  |  UI: http://192.168.1.152:3000
-# Bare binary, no Docker. Stores repos in /opt/gitea/data.
-# After deploy: visit http://192.168.1.152:3000 to complete first-run wizard.
-# ─────────────────────────────────────────────────────────────────────────────
+# ##############################################################################
+# vm_jenkins.tf
+# Deploying Jenkins using the standalone WAR file & running under OpenJDK 25.
+# Memory configured for 2GB (2048MB) with JVM heap limits.
+# ##############################################################################
 
 resource "proxmox_virtual_environment_vm" "jenkins" {
-  name        = "jenkins-master"
-  description = "Jenkins Master server — 192.168.1.155"
+  name        = "jenkins"
+  description = "Jenkins Automation Server — ${var.jenkins_ip}"
   node_name   = var.proxmox_node
-  vm_id       = var.vmid_base + 4   # 204
+  vm_id       = var.vmid_base + 4
   on_boot     = true
   started     = true
 
@@ -18,14 +18,12 @@ resource "proxmox_virtual_environment_vm" "jenkins" {
   }
 
   cpu {
-    cores = 2
-    limit = 50
-    units = 50
+    cores = 3
     type  = "host"
   }
 
   memory {
-    dedicated = 1024
+    dedicated = 2048
   }
 
   network_device {
@@ -36,7 +34,7 @@ resource "proxmox_virtual_environment_vm" "jenkins" {
   disk {
     datastore_id = var.storage_pool
     interface    = "scsi0"
-    size         = 60
+    size         = 80
     discard      = "on"
     iothread     = true
   }
@@ -44,16 +42,12 @@ resource "proxmox_virtual_environment_vm" "jenkins" {
   initialization {
     ip_config {
       ipv4 {
-        address = "192.168.1.152/24"
+        address = "${var.jenkins_ip}/24"
         gateway = var.network_gateway
       }
     }
     dns {
       servers = var.dns_servers
-    }
-    user_account {
-      username = "ubuntu"
-      keys     = [var.ssh_public_key]
     }
     user_data_file_id = proxmox_virtual_environment_file.jenkins_userdata.id
   }
@@ -71,38 +65,87 @@ resource "proxmox_virtual_environment_file" "jenkins_userdata" {
     file_name = "jenkins-userdata.yaml"
     data      = <<-EOT
       #cloud-config
+      hostname: jenkins-server
+      chpasswd:
+        list: |
+          ${var.jenkins_username}:${var.jenkins_password}
+        expire: False
+      users:
+        - default
+        - name: ${var.jenkins_username}
+          groups:
+            - sudo
+          ssh_authorized_keys:
+            - ${var.ssh_public_key}
+          sudo: ['ALL=(ALL) NOPASSWD:ALL']
+          shell: /bin/bash
       package_update: true
       package_upgrade: true
       packages:
         - curl
         - git
-        - sqlite3
+        - podman
+        - wget
+        - qemu-guest-agent
+        - fontconfig
+        - freetype
 
       runcmd:
-        - adduser gitea --gecos "" --disabled-password --home /opt/gitea
-        - mkdir -p /opt/gitea/data /opt/gitea/custom /opt/gitea/log
-        - curl -fsSL https://dl.gitea.com/gitea/1.22.1/gitea-1.22.1-linux-amd64 -o /usr/local/bin/gitea
-        - chmod +x /usr/local/bin/gitea
-        - chown -R gitea:gitea /opt/gitea
+        # 1. Correctly add the Jenkins system user
+        - adduser ${var.jenkins_username} --gecos "" --disabled-password --home /home/${var.jenkins_username}
+
+        - systemctl enable qemu-guest-agent
+        - systemctl start qemu-guest-agent
+
+        # 2. Download and configure OpenJDK 25 Headless JRE (Reduced footprint)
+        - mkdir -p /opt/java
+        - curl -sL "https://download.oracle.com/java/25/latest/jdk-25_linux-x64_bin.tar.gz" -o /tmp/jdk25.tar.gz
+        - tar -xzf /tmp/jdk25.tar.gz -C /opt/java --strip-components=1
+        - rm -f /tmp/jdk25.tar.gz
+        - ln -sf /opt/java/bin/java /usr/bin/java
+
+        # 3. Download the specific Jenkins WAR stable binary
+        - mkdir -p /opt/jenkins
+        - curl -sL "https://get.jenkins.io/war-stable/2.568.1/jenkins.war" -o /opt/jenkins/jenkins.war
+        - chown -R ${var.jenkins_username}:${var.jenkins_username} /opt/jenkins /home/${var.jenkins_username}
+
+        # 4. Create Systemd Service for the standalone Jenkins WAR
         - |
-          cat > /etc/systemd/system/gitea.service <<SERVICE
+          cat > /etc/systemd/system/jenkins.service <<SERVICE
           [Unit]
-          Description=Gitea
+          Description=Jenkins Standalone Automation Server
           After=network.target
+
           [Service]
           Type=simple
-          User=gitea
-          WorkingDirectory=/opt/gitea
-          ExecStart=/usr/local/bin/gitea web --config /opt/gitea/custom/app.ini
+          User=${var.jenkins_username}
+          WorkingDirectory=/home/${var.jenkins_username}
+          Environment="JENKINS_HOME=/home/${var.jenkins_username} JAVA_HOME=/opt/java"
+          ExecStart=/opt/java/bin/java -Xms1024m -Xmx1536m -jar /opt/jenkins/jenkins.war --httpPort=8080
           Restart=on-failure
-          RestartSec=5
-          Environment=HOME=/opt/gitea USER=gitea GITEA_WORK_DIR=/opt/gitea
+          RestartSec=10
+
           [Install]
           WantedBy=multi-user.target
           SERVICE
         - systemctl daemon-reload
-        - systemctl enable --now gitea
-        - echo "==> Gitea ready at http://192.168.1.152:3000 — finish setup via web UI"
+        - restorecon -v /opt/java/bin/java
+        - systemctl enable jenkins
+        - systemctl start jenkins
+
+        # 5. Install Kubernetes Tools (kubectl & Helm)
+        - curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+        - chmod +x ./kubectl
+        - mv ./kubectl /usr/local/bin/kubectl
+        - curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
+        # 6. Configure Podman to connect to local registry over insecure HTTP
+        - |
+          cat >> /etc/containers/registries.conf <<EOF
+          [[registry]]
+          location = "${var.registry_ip}:5000"
+          insecure = true
+          EOF
     EOT
   }
 }

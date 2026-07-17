@@ -191,3 +191,21 @@ variable "registry_password" {
   type        = string
   default     = "password123"
 }
+
+variable "jenkins_ip" {
+  description = "LAN IP for Jenkins firewall/router"
+  type        = string
+  default     = "192.168.1.155"
+}
+
+variable "jenkins_username" {
+  description = "Jenkins VM username"
+  type        = string
+  default     = "jenkins"
+}
+
+variable "jenkins_password" {
+  description = "Jenkins VM password"
+  type        = string
+  default     = "password123"
+}
