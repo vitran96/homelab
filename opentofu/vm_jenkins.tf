@@ -89,6 +89,8 @@ resource "proxmox_virtual_environment_file" "jenkins_userdata" {
         - qemu-guest-agent
         - fontconfig
         - freetype
+        - podman-docker
+        - python3-pip
 
       runcmd:
         # 1. Correctly add the Jenkins system user
@@ -146,6 +148,9 @@ resource "proxmox_virtual_environment_file" "jenkins_userdata" {
           location = "${var.registry_ip}:5000"
           insecure = true
           EOF
+
+        # 7. podman-compose
+        - su - ${var.jenkins_username} -c "pip install --user podman-compose"
     EOT
   }
 }
