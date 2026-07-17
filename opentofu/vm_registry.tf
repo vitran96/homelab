@@ -104,10 +104,11 @@ resource "proxmox_virtual_environment_file" "registry_userdata" {
       runcmd:
         - systemctl enable qemu-guest-agent
         - systemctl start qemu-guest-agent
-        - curl -fsSL https://github.com/distribution/distribution/releases/download/v3.1.1/registry_3.1.1_linux_amd64.tar.gz -o /tmp
-        - tar -xzf "/tmp/registry_3.1.1_linux_amd64.tar.gz" /usr/local/bin/registry
+        - curl -SL https://github.com/distribution/distribution/releases/download/v3.1.1/registry_3.1.1_linux_amd64.tar.gz -o /tmp/registry.tar.gz
+        - tar -xzf "/tmp/registry.tar.gz"
+        - mv ./registry /usr/local/bin/registry
         - chmod +x /usr/local/bin/registry
-        - rm /tmp/registry_3.1.1_linux_amd64.tar.gz
+        - rm /tmp/registry.tar.gz
         - adduser ${var.registry_username} --gecos "" --disabled-password --home /home/${var.registry_username}
         - mkdir -p /home/${var.registry_username}/data
         - |
@@ -124,6 +125,8 @@ resource "proxmox_virtual_environment_file" "registry_userdata" {
             addr: :5000
             headers:
               X-Content-Type-Options: [nosniff]
+          tracing:
+            enabled: false
           health:
             storagedriver:
               enabled: true
@@ -146,7 +149,9 @@ resource "proxmox_virtual_environment_file" "registry_userdata" {
           WantedBy=multi-user.target
           SERVICE
         - systemctl daemon-reload
-        - systemctl enable --now registry
+        - restorecon -v /usr/local/bin/registry
+        - systemctl enable registry
+        - systemctl start registry
         - echo "==> Registry ready at http://${var.registry_ip}:5000"
         - echo "done" > /tmp/cloud-config.done
     EOT
