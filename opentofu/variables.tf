@@ -162,6 +162,18 @@ variable "gitea_ip" {
   default     = "192.168.1.152"
 }
 
+variable "gitea_username" {
+  description = "Gitea VM username"
+  type        = string
+  default     = "gitea"
+}
+
+variable "gitea_password" {
+  description = "Gitea VM password"
+  type        = string
+  default     = "password123"
+}
+
 variable "registry_ip" {
   description = "LAN IP for Gitea firewall/router"
   type        = string

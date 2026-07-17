@@ -82,6 +82,8 @@ resource "proxmox_virtual_environment_file" "k3s_master_userdata" {
         - qemu-guest-agent
       runcmd:
         - adduser ${var.k3s_master_username} --gecos "" --disabled-password --home /home/${var.k3s_master_username}
+        - systemctl enable qemu-guest-agent
+        - systemctl start qemu-guest-agent
         - curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="server --write-kubeconfig-mode 644 --tls-san ${var.k3s_master_ip} --node-name k3s-master" sh -
         - mkdir -p /home/${var.k3s_master_username}/.kube
         - cp /etc/rancher/k3s/k3s.yaml /home/${var.k3s_master_username}/.kube/config

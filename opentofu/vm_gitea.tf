@@ -1,14 +1,8 @@
-# ── Gitea ─────────────────────────────────────────────────────────────────────
-# IP: 192.168.1.152  |  UI: http://192.168.1.152:3000
-# Bare binary, no Docker. Stores repos in /opt/gitea/data.
-# After deploy: visit http://192.168.1.152:3000 to complete first-run wizard.
-# ─────────────────────────────────────────────────────────────────────────────
-
 resource "proxmox_virtual_environment_vm" "gitea" {
   name        = "gitea"
-  description = "Gitea Git server — 192.168.1.152"
+  description = "Gitea Git server — ${var.gitea_ip}"
   node_name   = var.proxmox_node
-  vm_id       = var.vmid_base + 1   # 201
+  vm_id       = var.vmid_base + 1
   on_boot     = true
   started     = true
 
@@ -18,14 +12,12 @@ resource "proxmox_virtual_environment_vm" "gitea" {
   }
 
   cpu {
-    cores = 1
-    limit = 50
-    units = 50
+    cores = 2
     type  = "host"
   }
 
   memory {
-    dedicated = 512
+    dedicated = 1024
   }
 
   network_device {
@@ -44,20 +36,17 @@ resource "proxmox_virtual_environment_vm" "gitea" {
   initialization {
     ip_config {
       ipv4 {
-        address = "192.168.1.152/24"
+        address = "${var.gitea_ip}/24"
         gateway = var.network_gateway
       }
     }
     dns {
       servers = var.dns_servers
     }
-    user_account {
-      username = "ubuntu"
-      keys     = [var.ssh_public_key]
-    }
     user_data_file_id = proxmox_virtual_environment_file.gitea_userdata.id
   }
 
+  serial_device {}
   operating_system { type = "l26" }
   agent            { enabled = true }
 }
@@ -71,19 +60,37 @@ resource "proxmox_virtual_environment_file" "gitea_userdata" {
     file_name = "gitea-userdata.yaml"
     data      = <<-EOT
       #cloud-config
+      hostname: gitea-server
+      chpasswd:
+        list: |
+          ${var.gitea_username}:${var.gitea_password}
+        expire: False
+      users:
+        - default
+        - name: ${var.gitea_username}
+          groups:
+            - sudo
+          ssh_authorized_keys:
+            - ${var.ssh_public_key}
+          sudo: ['ALL=(ALL) NOPASSWD:ALL']
+          shell: /bin/bash
       package_update: true
       package_upgrade: true
       packages:
         - curl
         - git
         - sqlite3
+        - qemu-guest-agent
 
       runcmd:
-        - adduser gitea --gecos "" --disabled-password --home /opt/gitea
-        - mkdir -p /opt/gitea/data /opt/gitea/custom /opt/gitea/log
-        - curl -fsSL https://dl.gitea.com/gitea/1.22.1/gitea-1.22.1-linux-amd64 -o /usr/local/bin/gitea
+        - adduser ${var.gitea_username} --gecos "" --disabled-password --home /home/${var.gitea_username}
+        - systemctl enable qemu-guest-agent
+        - systemctl start qemu-guest-agent
+        - mkdir -p /home/${var.gitea_username}/data /home/${var.gitea_username}/custom /home/${var.gitea_username}/log
+        - chown -R ${var.gitea_username}:${var.gitea_username} /home/${var.gitea_username}
+        - chmod -R 755 /home/${var.gitea_username}
+        - curl -fsSL https://dl.gitea.com/gitea/1.27.0/gitea-1.27.0-linux-amd64 -o /usr/local/bin/gitea
         - chmod +x /usr/local/bin/gitea
-        - chown -R gitea:gitea /opt/gitea
         - |
           cat > /etc/systemd/system/gitea.service <<SERVICE
           [Unit]
@@ -91,18 +98,20 @@ resource "proxmox_virtual_environment_file" "gitea_userdata" {
           After=network.target
           [Service]
           Type=simple
-          User=gitea
-          WorkingDirectory=/opt/gitea
-          ExecStart=/usr/local/bin/gitea web --config /opt/gitea/custom/app.ini
+          User=${var.gitea_username}
+          WorkingDirectory=/home/${var.gitea_username}
+          ExecStart=/usr/local/bin/gitea web --config /home/${var.gitea_username}/custom/app.ini
           Restart=on-failure
           RestartSec=5
-          Environment=HOME=/opt/gitea USER=gitea GITEA_WORK_DIR=/opt/gitea
+          Environment=HOME=/home/${var.gitea_username} USER=gitea GITEA_WORK_DIR=/home/${var.gitea_username}
           [Install]
           WantedBy=multi-user.target
           SERVICE
         - systemctl daemon-reload
-        - systemctl enable --now gitea
-        - echo "==> Gitea ready at http://192.168.1.152:3000 — finish setup via web UI"
+        - restorecon -v /usr/local/bin/gitea
+        - systemctl enable gitea
+        - systemctl start gitea
+        - echo "==> Gitea ready at http://${var.gitea_ip}:3000"
     EOT
   }
 }
